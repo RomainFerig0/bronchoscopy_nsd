@@ -1,21 +1,8 @@
 RUN THE ESFPNET_base MODEL ON Anatomical_landmarks WITH MULTITASK MODEL ON PRETRAINED MODEL Y WITH X EPOCHS :
-python ./ESFPNet_base/train_joint_Anatomical_Landmarks_ESFPNet.py --label_json_path ./Proc_data/data/labels_Anatomical_landmarks_final.json --dataset ./Proc_data/dataset/Anatomical_landmarks --n_epochs X --model_type Y
+python ./ESFPNet_base/train_joint_Anatomical_Landmarks_ESFPNet.py --label_json_path ./Proc_data/data/labels_Anatomical_landmarks_final.json --dataset ./Proc_data/dataset/Anatomical_landmarks --n_epochs X --model_type Y --batch_size A --init_trainsize B
 
 INFERENCE ON THAT MODEL :
 python ./ESFPNet_base/infer_joint_Anatomical_Landmarks.py --label_json_path ./Proc_data/data/labels_Anatomical_landmarks_final.json --path_imgs_test ./Proc_data/dataset/Anatomical_landmarks/test/imgs --path_masks_test ./Proc_data/dataset/Anatomical_landmarks/test/masks --saved_model ./SaveModel/Anatomical_Landmarks_multimodel/Mean_best.pt --log_dir ./output_dir
 
-
 RUN THE ESFPNET_base MODEL ON Lung_lesions WITH MULTITASK MODEL ON PRETRAINED MODEL Y WITH X EPOCHS :
 python ./ESFPNet_base/train_joint_Lung_lesions_ESFPNet.py --label_json_path ./Proc_data/data/labels_Lung_lesions_final.json --dataset ./Proc_data/dataset/Lung_lesions --n_epochs X--model_type Y
-
-
-
-##################################################################################
-
-python ./ESFPNet_base/train_joint_Anatomical_Landmarks_ESFPNet.py \
-  --label_json_path ./Proc_data/data/labels_Anatomical_landmarks_final.json \
-  --dataset ./Proc_data/dataset/Anatomical_landmarks \
-  --n_epochs 5 \
-  --batch_size 4 \
-  --init_trainsize 224 \
-  --model_type B2
