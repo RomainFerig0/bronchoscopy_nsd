@@ -60,41 +60,49 @@ class SplittingDataset(Dataset):
     dataloader for polyp segmentation tasks
     """
     def __init__(self, image_root, gt_root):
-
         with open(args.label_json_path, 'r') as f:
             data = json.load(f)
 
-        object_id = [id['object_id'] for id in data]
-        
-        self.images = []
-        
+        object_id = {id['object_id'] for id in data}  # faster lookup
+
+        # Collect all images and masks
+        all_images = []
         for root, dirs, files in os.walk(image_root):
             for file in files:
                 if file.endswith('.jpg') or file.endswith('.png'):
-                    if os.path.splitext(os.path.basename(os.path.join(root, file)))[0] in object_id:
-                        self.images.append(os.path.join(root, file))
-        
-        self.gts = []
+                    filename = os.path.splitext(file)[0]
+                    if filename in object_id:
+                        all_images.append(os.path.join(root, file))
 
+        all_masks = []
         for root, dirs, files in os.walk(gt_root):
             for file in files:
                 if file.endswith('.jpg') or file.endswith('.png'):
-                    if os.path.splitext(os.path.basename(os.path.join(root, file)))[0] in object_id:
-                        self.gts.append(os.path.join(root, file))
+                    filename = os.path.splitext(file)[0]
+                    if filename in object_id:
+                        all_masks.append(os.path.join(root, file))
 
-        self.images = [file for file in self.images if file.replace('/imgs/', '/masks_' + args.task + '/') in self.gts]
-        self.images = sorted(self.images)
-        self.gts = sorted(self.gts)
-        self.filter_files()
+        # Match images and masks based on filename only
+        image_dict = {os.path.splitext(os.path.basename(p))[0]: p for p in all_images}
+        mask_dict = {os.path.splitext(os.path.basename(p))[0]: p for p in all_masks}
+
+        common_keys = list(set(image_dict.keys()) & set(mask_dict.keys()))
+
+        # Only keep matching pairs
+        self.images = [image_dict[k] for k in common_keys]
+        self.gts = [mask_dict[k] for k in common_keys]
+
         self.size = len(self.images)
         self.transform = transforms.ToTensor()
+
+        print(f"[INFO] {self.size} image-mask pairs loaded.")
 
     def __getitem__(self, index):
         
         image = self.rgb_loader(self.images[index])
         gt = self.binary_loader(self.gts[index])
         
-        name_image = self.images[index].split('/')[-1]
+        name_image = os.path.basename(self.images[index])
 
 
         file_name = os.path.splitext(os.path.basename(self.images[index]))[0]

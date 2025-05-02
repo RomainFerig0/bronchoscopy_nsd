@@ -57,9 +57,11 @@ for i in data_objects:
             # Save file for each task
             save_path = Path(args.path_save)
             path = os.path.join(save_path, i['id'], j['video_id'])
-            if not os.path.exists(path):
-                os.makedirs(path)
-            os.chdir(path)
+
+            # Ensure all directories exist
+            os.makedirs(path, exist_ok=True)
+
+            # Proceed with saving the mask
             mask = np.zeros((480, 480))  # image 480x480
             for l in data_annots:
                 if (l['object_id'] == k['image_id']):
@@ -72,8 +74,12 @@ for i in data_objects:
                             ab = np.stack((shape_x, shape_y), axis=1)
                             img3 = cv2.drawContours(mask, [ab], -1, 255, -1)
 
-                            cv2.imwrite(l['object_id'] + '.png', mask.astype(np.uint8))
+                            # Save the mask
+                            save_file_path = os.path.join(path, l['object_id'] + '.png')
+                            cv2.imwrite(save_file_path, mask.astype(np.uint8))
+
                             shape_x.clear()
                             shape_y.clear()
+
 
 
