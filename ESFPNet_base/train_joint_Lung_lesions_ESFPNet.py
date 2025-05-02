@@ -281,17 +281,17 @@ class ESFPNetStructure(nn.Module):
     def _init_weights(self):
 
         if args.model_type == 'B0':
-            pretrained_dict = torch.load('./Pretrained/mit_b0.pth')
+            pretrained_dict = torch.load('./ESFPNet_base/Pretrained/mit_b0.pth')
         if args.model_type == 'B1':
-            pretrained_dict = torch.load('./Pretrained/mit_b1.pth')
+            pretrained_dict = torch.load('./ESFPNet_base/Pretrained/mit_b1.pth')
         if args.model_type == 'B2':
-            pretrained_dict = torch.load('./Pretrained/mit_b2.pth')
+            pretrained_dict = torch.load('./ESFPNet_base/Pretrained/mit_b2.pth')
         if args.model_type == 'B3':
-            pretrained_dict = torch.load('./Pretrained/mit_b3.pth')
+            pretrained_dict = torch.load('./ESFPNet_base/Pretrained/mit_b3.pth')
         if args.model_type == 'B4':
-            pretrained_dict = torch.load('./Pretrained/mit_b4.pth')
+            pretrained_dict = torch.load('./ESFPNet_base/Pretrained/mit_b4.pth')
         if args.model_type == 'B5':
-            pretrained_dict = torch.load('./Pretrained/mit_b5.pth')
+            pretrained_dict = torch.load('./ESFPNet_base/Pretrained/mit_b5.pth')
 
 
         model_dict = self.backbone.state_dict()
@@ -299,7 +299,8 @@ class ESFPNetStructure(nn.Module):
         model_dict.update(pretrained_dict)
         self.backbone.load_state_dict(model_dict)
         print("successfully loaded!!!!")
-
+        print("Epochs: ", args.n_epochs)
+        print("Model type: ", args.model_type)
 
     def forward(self, x):
 
@@ -416,8 +417,8 @@ def evaluate():
         gt = np.asarray(gt, np.float32)
         gt /= (gt.max() + 1e-8)
 
-        image = image.cuda()
-        labels_tensor = labels_tensor.cuda()
+        image = image.to(device)
+        labels_tensor = labels_tensor.to(device)
 
         pred1, pred2= ESFPNet(image)
         pred2 = np.squeeze(pred2)

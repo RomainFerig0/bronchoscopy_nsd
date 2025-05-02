@@ -78,7 +78,7 @@ class PolypDataset(Dataset):
         if self.augmentations == True:
             print('Using RandomRotation, RandomFlip')
             self.img_transform = transforms.Compose([
-                transforms.RandomRotation(90, resample=False, expand=False, center=None),
+                transforms.RandomRotation(90, expand=False, center=None),
                 transforms.RandomVerticalFlip(p=0.5),
                 transforms.RandomHorizontalFlip(p=0.5),
                 transforms.Resize((self.trainsize, self.trainsize)),
@@ -87,7 +87,7 @@ class PolypDataset(Dataset):
                 transforms.Normalize([0.485, 0.456, 0.406],
                                      [0.229, 0.224, 0.225])])
             self.gt_transform = transforms.Compose([
-                transforms.RandomRotation(90, resample=False, expand=False, center=None),
+                transforms.RandomRotation(90, expand=False, center=None),
                 transforms.RandomVerticalFlip(p=0.5),
                 transforms.RandomHorizontalFlip(p=0.5),
                 transforms.Resize((self.trainsize, self.trainsize)),
@@ -234,15 +234,21 @@ class ESFPNetStructure(nn.Module):
 
         # Backbone
         if args.model_type == 'B0':
+            print("Loading model b0")
             self.backbone = mit.mit_b0()
         if args.model_type == 'B1':
+            print("Loading model b1")
             self.backbone = mit.mit_b1()
         if args.model_type == 'B2':
+            print("Loading model b2")
             self.backbone = mit.mit_b2()
         if args.model_type == 'B3':
+            print("Loading model b3")
             self.backbone = mit.mit_b3()
         if args.model_type == 'B4':
+            print("Loading model b4")
             self.backbone = mit.mit_b4()
+            print("Loading model b5")
         if args.model_type == 'B5':
             self.backbone = mit.mit_b5()
 
@@ -280,25 +286,26 @@ class ESFPNetStructure(nn.Module):
     def _init_weights(self):
 
         if args.model_type == 'B0':
-            pretrained_dict = torch.load('./Pretrained/mit_b0.pth')
+            pretrained_dict = torch.load('./ESFPNet_base/Pretrained/mit_b0.pth')
         if args.model_type == 'B1':
-            pretrained_dict = torch.load('./Pretrained/mit_b1.pth')
+            pretrained_dict = torch.load('./ESFPNet_base/Pretrained/mit_b1.pth')
         if args.model_type == 'B2':
-            pretrained_dict = torch.load('./Pretrained/mit_b2.pth')
+            pretrained_dict = torch.load('./ESFPNet_base/Pretrained/mit_b2.pth')
         if args.model_type == 'B3':
-            pretrained_dict = torch.load('./Pretrained/mit_b3.pth')
+            pretrained_dict = torch.load('./ESFPNet_base/Pretrained/mit_b3.pth')
         if args.model_type == 'B4':
-            pretrained_dict = torch.load('./Pretrained/mit_b4.pth')
+            pretrained_dict = torch.load('./ESFPNet_base/Pretrained/mit_b4.pth')
         if args.model_type == 'B5':
-            pretrained_dict = torch.load('./Pretrained/mit_b5.pth')
+            pretrained_dict = torch.load('./ESFPNet_base/Pretrained/mit_b5.pth')
 
 
         model_dict = self.backbone.state_dict()
         pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
         model_dict.update(pretrained_dict)
         self.backbone.load_state_dict(model_dict)
-        print("successfully loaded!!!!")
-
+        print("Successfully loaded!!!!")
+        print("Epochs: ", args.n_epochs)
+        print("Model type: ", args.model_type)
 
     def forward(self, x):
 
@@ -416,8 +423,8 @@ def evaluate():
         gt = np.asarray(gt, np.float32)
         gt /= (gt.max() + 1e-8)
 
-        image = image.cuda()
-        labels_tensor = labels_tensor.cuda()
+        image = image.to(device)
+        labels_tensor = labels_tensor.to(device)
         #label = label.cuda()
 
         pred1, pred2= ESFPNet(image)
@@ -508,16 +515,21 @@ def evaluate():
     return 100 * val/count,100* overall_accuracy.item()
 
 def training_loop(n_epochs, ESFPNet_optimizer, numIters):
+
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     trainDataset = PolypDataset(train_images_path + '/', train_masks_path + '/',args.label_json_path, trainsize=args.init_trainsize, augmentations = True) #
     train_loader = DataLoader(dataset=trainDataset,batch_size=args.batch_size,shuffle=True)
+    print(f"Train dataset size: {len(train_loader.dataset)}")
+    print(f"Train loader batches: {len(train_loader)}")
 
     segmentation_max = 0
     classification_max = 0
     mean_max = 0
     threshold = 0.6
 
+    print(f"Starting training for {n_epochs} epochs")
     for epoch in range(n_epochs):
+        print(f"Training epoch {epoch}")
         loss_seg_train = 0.0
         loss_class_train = 0.0
         total_correct_predictions = torch.zeros(11).to(device)

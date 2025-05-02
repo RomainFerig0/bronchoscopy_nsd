@@ -253,7 +253,7 @@ class ESFPNetStructure(nn.Module):
 def saveResult():
     os.makedirs(args.log_dir, exist_ok=True)
 
-    ESFPNet = torch.load(args.save_model)
+    ESFPNet = torch.load(args.saved_model)
     ESFPNet.eval()
 
     total = 0
@@ -269,8 +269,8 @@ def saveResult():
         gt = np.asarray(gt, np.float32)
         gt /= (gt.max() + 1e-8)
 
-        image = image.cuda()
-        labels_tensor = labels_tensor.cuda()
+        image = image.to(device)
+        labels_tensor = labels_tensor.to(device)
         
         pred1, pred2= ESFPNet(image)
         pred2 = np.squeeze(pred2)
@@ -302,16 +302,16 @@ def saveResult():
         correct_predictions = (thresholded_predictions == labels_tensor).sum(dim=0)
         total_correct_predictions += correct_predictions
 
-        imageio.imwrite(args.log_dir + name, img_as_ubyte(pred1))
+        output_path = os.path.join(args.log_dir, name)
+        imageio.imwrite(output_path, img_as_ubyte(pred1))
     
     print("dice_val_segmetation",100 * val/count)
     overall_accuracy = torch.mean(total_correct_predictions) / total
     print("acc_val_classification", overall_accuracy.item())
 
 
-        
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 if torch.cuda.is_available():
-    device = torch.device("cuda:0")
     print('Models moved to GPU.')
 else:
     print('Only CPU available.')
